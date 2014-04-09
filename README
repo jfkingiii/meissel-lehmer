@@ -1,0 +1,8 @@
+Implementation of calculation of pi(x) by the Meissel-method as described in 
+Lagarias, Miller, and Odlyzko, Computing π(x): the Meissel-Lehmer Method.
+
+www.dtc.umn.edu/~odlyzko/doc/arch/meissel.lehmer.pdf
+
+All programs assume a 64 bit machine and are expected to fail on a 32 bit
+target. They have been successfully compiled and run under Ubuntu running
+on Xeon and Redhat running on i5.

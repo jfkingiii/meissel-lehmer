@@ -1,0 +1,186 @@
+myfloor<-function(x) floor(round(x,9))
+
+
+pi_test<-function(x)
+{
+	if (x<2) return(0)
+	N<-floor((x-1)/2)
+	s<-rep(1,N);
+	j<-1
+	while( (2*j+1)^2 <= x) 
+	{
+		if(s[j]==1) s[seq(2*j*(j+1), N, by=2*j+1)]<-0
+		j=j+1
+	}
+	sum(s)+1
+}
+
+pi<-function(x)
+{
+	if(floor(x)==3) return(2)
+	if(floor(x)==2) return(1)
+	if(floor(x)<2) return(0)
+	N<-floor(x)
+	s<-rep(1,N);
+	s[1]<-0
+	s[2]<-1
+	s[seq(4,N,by=2)]<-0
+	j<-3
+	while(j<=sqrt(N)) 
+	{
+		if(s[j]==1) s[seq(j^2, N, by=j)]<-0
+		j=j+2
+	}
+	sum(s)
+}
+
+
+primes<-function(x)
+{
+	N<-floor(x)
+	s<-rep(1,N);
+	s[1]<-0;
+	j<-2
+	while(j<=sqrt(N)) 
+	{
+		if(s[j]==1) s[seq(j^2, N, by=j)]<-0
+		j=j+1
+	}
+	(1:N)[s[1:N]==1]
+}
+
+
+
+pi_values<-function(N)
+{
+#Return pi(n) for 1<=n<=N; for use in Meissel-Lehmer Sieve
+	s<-rep(1,N);
+	s[1]<-0
+	s[2]<-1
+	s[seq(4,N,by=2)]<-0
+	j<-3
+	while(j<=sqrt(N)) 
+	{
+		if(s[j]==1) s[seq(j^2, N, by=j)]<-0
+		j=j+2
+	}
+	cumsum(s)
+}
+
+
+P2<-function(x)
+{
+#returns the count of all q<=x where q is a product of two primes both greater than x^(1/3)
+
+pi_list<-pi_values(myfloor(x^(2/3)))#pi_list used to compute pi(y) for y between sqrt(x) and x^(2/3)
+a<-pi_list[myfloor(x^(1/3))]#p_a is the largest prime less <= x^(1/3)
+tmp<-primes(sqrt(x))
+p_a<-tmp[a]    #we require each of the two prime factors to exceed p_a
+prime_list <- tmp[tmp>p_a];#all primes between x^(1/3) and sqrt(x)
+u<-myfloor(rep(x, length(prime_list))/prime_list)
+v<-pi_list[u] - seq(a+1, length=length(u))+1
+cat("P2 = ", sum(v),"\n")
+sum(v)
+}
+
+
+
+mobius<-function(x)
+{
+	N<-floor(x)
+	s<-rep(1,N);
+	s[1]<-1
+	prime_list<-primes(x)
+	for(j in prime_list) s[seq(j, N, by=j)]<-s[seq(j, N, by=j)]*(-1)
+	squared_primes<-prime_list[prime_list<=sqrt(N)]^2
+	for(j in squared_primes) s[seq(j, N, by=j)]<-0
+	s
+}
+
+S1<-function(x)
+{
+N<-floor(signif(x^(1/3),9))
+cat("S1 = ",sum(mobius(N)*floor(x/(1:N))),"\n")
+sum(mobius(N)*floor(x/(1:N)))
+}
+
+
+lpf<-function(x)
+{
+	N<-floor(x)
+	s<-rep(0,N)
+	prime_list<-primes(x)
+	for(j in prime_list) 
+	{
+		for(k in seq(j,N,by=j)) if(s[k]==0) s[k]<-j
+	}
+	s
+}
+
+
+gpf<-function(x)
+{
+	N<-floor(x)
+	s<-rep(0,N)
+	prime_list<-primes(x)
+	for(j in prime_list) 
+	{
+		for(k in seq(j,N,by=j)) s[k]<-j
+	}
+	s
+}
+
+
+
+special<-function(x)
+{
+
+# (n, b) is a special leaf if and only if
+#  all prime factors of n are <= x^(1/3)
+#  n is square free (mu(n) != 0)
+#  n > x^(1/3) 
+#  n/lpf(n)<=x^(1/3)
+#  lpf(n) = p(b+1)
+
+	N<-floor(x^(2/3))
+	A<-data.frame(n=1:N,mu=mobius(N), lpf=lpf(N), gpf=gpf(N))
+	ind<-A$gpf<=x^(1/3) & A$mu!=0 & A$n^3>x & A$n/A$lpf<=x^(1/3)
+	B<-A[ind,]
+	a<-primes(x^(1/3))
+	u<-sapply(B$lpf, function(x) (1:length(a))[a==x])-1
+	B<-cbind(B, b=u)
+	B
+}
+
+phi<-function(y,b)
+{
+	#number of numbers left after sieving 1:y with p1, p2,...pb
+	N<-floor(y)
+	primelist<-primes(y)[1:b]
+	primelist<-primelist[primelist<=N]
+	s<-rep(1, y)
+	for(j in primelist)
+	{
+		for(k in seq(j, N, by=j)) s[k]<-0
+	}
+	sum(s)
+}
+
+eval.special<-function(x,A)
+{
+	ans=0
+	for (i in 1:nrow(A))
+	{
+		if (A$b[i]==0) ans = ans + floor(x/A$n[i])*A$mu[i]
+		else ans=ans+phi(x/A$n[i],A$b[i])*A$mu[i]
+	}
+	ans
+}
+
+ML<-function(t) 
+{
+cat("S2 = ", eval.special(t,special(t)),"\n")
+cat("pi(x^(1/3) = ", pi(t^(1/3)), "\n")
+print("pi = S2 + S1 - P2 + pi(x^(1/3)) -1")
+eval.special(t,special(t))+S1(t)-1+pi(t^(1/3))-P2(t)
+}

@@ -1,0 +1,8 @@
+awk  '{ gsub(/b/," 2 "); gsub(/d/, " 10 "); $5=""; print }' 1*.txt  > tc1.txt
+awk '!/#/ && !/-/ && !/x/ && /./' tc1.txt > tc2.txt
+awk '!/    /' tc2.txt > tc3.txt
+
+awk '{ if ($4 == $5) x =  "MATCH"; else  x = "FAIL"; print $1" " $2" " $3" "$4" "$5" " x}' test_results.txt | grep "FAIL"| more
+
+
+
